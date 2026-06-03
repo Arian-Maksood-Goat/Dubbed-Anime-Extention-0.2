@@ -1,15 +1,16 @@
-plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("eu.kanade.tachiyomi.animeextension")
-}
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'eu.kanade.tachiyomi.animeextension'
 
 ext {
-    name = "AnimeSalt"
-    pkgName = "animesalt"
-    lang = "hi"
-    versionName = "1.0"
+    name = 'AnimeSalt'
+    pkgName = 'animesalt'
+    lang = 'hi'
+
+    versionName = '1.0'
     versionCode = 1
-    baseUrl = "https://animesalt.ac"
+
+    baseUrl = 'https://animesalt.ac'
+
     isNsfw = false
 }
