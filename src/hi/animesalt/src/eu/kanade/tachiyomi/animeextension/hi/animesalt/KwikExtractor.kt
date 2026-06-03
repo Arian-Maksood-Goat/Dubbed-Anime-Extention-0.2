@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.aniwave
+package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
 import android.app.Application
 import android.util.Log
@@ -18,7 +18,7 @@ class KwikExtractor(
     private val appContext: Application,
 ) {
     companion object {
-        private const val TAG = "AniWave-Kwik"
+        private const val TAG = "AnimeSalt-Kwik"
         private val M3U8_REGEX = Regex("""(https?://[^\s\\'"]+\.m3u8[^\s\\'"]*?)""")
         private val KWIK_PARAMS_REGEX = Regex("""\("(\w+)",\d+,"(\w+)",(\d+),(\d+),\d+\)""")
         private val KWIK_FORM_URL = Regex("""action="([^"]+)"""")

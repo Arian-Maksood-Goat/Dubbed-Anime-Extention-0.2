@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.aniwave
+package eu.kanade.tachiyomi.animeextension.en.AnimeSalt
 
 import android.app.Application
 import android.util.Log
@@ -39,20 +39,20 @@ import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class AniWave :
+class AnimeSalt :
     ParsedAnimeHttpSource(),
     ConfigurableAnimeSource {
 
-    override val name = "AniWave (Unoriginal)"
+    override val name = "AnimeSalt"
 
     override val baseUrl: String
         get() = preferences.getString(PREF_CUSTOM_DOMAIN_KEY, null)?.takeIf { it.isNotBlank() }
             ?: preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
 
-    override val lang = "en"
+    override val lang = "hi"
     override val supportsLatest = true
 
-    private val utils by lazy { AniWaveUtils() }
+    private val utils by lazy { AnimeSaltUtils() }
     private val preferences by getPreferencesLazy()
     private val json: Json by injectLazy()
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
@@ -109,7 +109,7 @@ class AniWave :
     // =============================== Search ===============================
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val searchParams = AniWaveFilters.getSearchParameters(filters)
+        val searchParams = AnimeSaltFilters.getSearchParameters(filters)
         val vrf = if (query.isNotBlank()) utils.vrfEncrypt(query) else ""
 
         val url = buildString {
@@ -135,7 +135,7 @@ class AniWave :
     override fun searchAnimeSelector() = popularAnimeSelector()
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
-    override fun getFilterList(): AnimeFilterList = AniWaveFilters.FILTER_LIST
+    override fun getFilterList(): AnimeFilterList = AnimeSaltFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -298,7 +298,7 @@ class AniWave :
             }
             resultList
         } catch (e: Exception) {
-            Log.e("AniWave", "Failed to parse related anime", e)
+            Log.e("AnimeSalt", "Failed to parse related anime", e)
             emptyList()
         }
     }
@@ -345,7 +345,7 @@ class AniWave :
                 .map { episodeFromElement(it, animeUrl) }
                 .reversed()
         } catch (e: Exception) {
-            Log.e("AniWave", "Failed to parse episodes: ${e.message}")
+            Log.e("AnimeSalt", "Failed to parse episodes: ${e.message}")
             emptyList()
         }
     }
@@ -429,7 +429,7 @@ class AniWave :
         val document = try {
             responseBody.parseAs<ResultResponse>().toDocument()
         } catch (e: Exception) {
-            Log.e("AniWave", "Failed to parse video list: ${e.message}")
+            Log.e("AnimeSalt", "Failed to parse video list: ${e.message}")
             return emptyList()
         }
 
@@ -497,7 +497,7 @@ class AniWave :
                     }
                 }
             } catch (e: Exception) {
-                Log.e("AniWave", "Mapper API failed: ${e.message}")
+                Log.e("AnimeSalt", "Mapper API failed: ${e.message}")
             }
         }
 
@@ -583,7 +583,7 @@ class AniWave :
             extractFromPlayer(resolveEmbedChain(embedLink), embedLink, server)
         }
     } catch (e: Exception) {
-        Log.e("AniWave", "Failed to extract from ${server.serverName}: ${e.message}")
+        Log.e("AnimeSalt", "Failed to extract from ${server.serverName}: ${e.message}")
         emptyList()
     }
 
@@ -606,7 +606,7 @@ class AniWave :
         val host = try {
             embedUrl.toHttpUrl().host
         } catch (_: Exception) {
-            Log.e("AniWave", "Invalid embed URL: $embedUrl")
+            Log.e("AnimeSalt", "Invalid embed URL: $embedUrl")
             return emptyList()
         }
 
@@ -680,7 +680,7 @@ class AniWave :
                         return listOf(Video(mp4Url, videoLabel, mp4Url, headers = videoHeaders))
                     }
                 } catch (e: Exception) {
-                    Log.w("AniWave", "Mapper MP4 failed: ${e.message}")
+                    Log.w("AnimeSalt", "Mapper MP4 failed: ${e.message}")
                 }
             }
 
@@ -714,7 +714,7 @@ class AniWave :
                 if (iframeUrl.isNullOrBlank()) return currentUrl
                 currentUrl = iframeUrl
             } catch (e: Exception) {
-                Log.e("AniWave", "Embed chain failed at $currentUrl: ${e.message}")
+                Log.e("AnimeSalt", "Embed chain failed at $currentUrl: ${e.message}")
                 return currentUrl
             }
         }
@@ -778,7 +778,7 @@ class AniWave :
     }
 
     companion object {
-        private val DOMAINS = arrayOf("animewave.to", "aniwave.id", "aniwave.best", "aniwave.ro") // Domains from https://megaplay.buzz/domains (Base64)
+        private val DOMAINS = arrayOf("animewave.to", "AnimeSalt.id", "AnimeSalt.best", "AnimeSalt.ro") // Domains from https://megaplay.buzz/domains (Base64)
         private val BASE_URLS = DOMAINS.map { "https://$it" }.toTypedArray()
 
         private val SOFTSUB_REGEX = Regex("""\bsoftsub\b""", RegexOption.IGNORE_CASE)

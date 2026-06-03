@@ -1,10 +1,10 @@
-package eu.kanade.tachiyomi.animeextension.en.aniwave
+package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import java.util.Calendar
 
-object AniWaveFilters {
+object AnimeSaltFilters {
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -42,48 +42,48 @@ object AniWaveFilters {
             }
         }
 
-    class SortFilter : QueryPartFilter("Sort order", AniWaveFiltersData.SORT)
+    class SortFilter : QueryPartFilter("Sort order", AnimeSaltFiltersData.SORT)
 
     class GenreFilter :
         CheckBoxFilterList(
             "Genre",
-            AniWaveFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
+            AnimeSaltFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
         )
 
     class SeasonFilter :
         CheckBoxFilterList(
             "Season",
-            AniWaveFiltersData.SEASON.map { CheckBoxVal(it.first, false) },
+            AnimeSaltFiltersData.SEASON.map { CheckBoxVal(it.first, false) },
         )
 
     class YearFilter :
         CheckBoxFilterList(
             "Year",
-            AniWaveFiltersData.YEAR.map { CheckBoxVal(it.first, false) },
+            AnimeSaltFiltersData.YEAR.map { CheckBoxVal(it.first, false) },
         )
 
     class TypeFilter :
         CheckBoxFilterList(
             "Type",
-            AniWaveFiltersData.TYPE.map { CheckBoxVal(it.first, false) },
+            AnimeSaltFiltersData.TYPE.map { CheckBoxVal(it.first, false) },
         )
 
     class StatusFilter :
         CheckBoxFilterList(
             "Status",
-            AniWaveFiltersData.STATUS.map { CheckBoxVal(it.first, false) },
+            AnimeSaltFiltersData.STATUS.map { CheckBoxVal(it.first, false) },
         )
 
     class LanguageFilter :
         CheckBoxFilterList(
             "Language",
-            AniWaveFiltersData.LANGUAGE.map { CheckBoxVal(it.first, false) },
+            AnimeSaltFiltersData.LANGUAGE.map { CheckBoxVal(it.first, false) },
         )
 
     class RatingFilter :
         CheckBoxFilterList(
             "Rating",
-            AniWaveFiltersData.RATING.map { CheckBoxVal(it.first, false) },
+            AnimeSaltFiltersData.RATING.map { CheckBoxVal(it.first, false) },
         )
 
     val FILTER_LIST get() = AnimeFilterList(
@@ -113,17 +113,17 @@ object AniWaveFilters {
 
         return FilterSearchParams(
             sort = filters.asQueryPart<SortFilter>(),
-            genre = filters.parseCheckbox<GenreFilter>(AniWaveFiltersData.GENRE, "genre"),
-            season = filters.parseCheckbox<SeasonFilter>(AniWaveFiltersData.SEASON, "season"),
-            year = filters.parseCheckbox<YearFilter>(AniWaveFiltersData.YEAR, "year"),
-            type = filters.parseCheckbox<TypeFilter>(AniWaveFiltersData.TYPE, "term_type"),
-            status = filters.parseCheckbox<StatusFilter>(AniWaveFiltersData.STATUS, "status"),
-            language = filters.parseCheckbox<LanguageFilter>(AniWaveFiltersData.LANGUAGE, "language"),
-            rating = filters.parseCheckbox<RatingFilter>(AniWaveFiltersData.RATING, "rating"),
+            genre = filters.parseCheckbox<GenreFilter>(AnimeSaltFiltersData.GENRE, "genre"),
+            season = filters.parseCheckbox<SeasonFilter>(AnimeSaltFiltersData.SEASON, "season"),
+            year = filters.parseCheckbox<YearFilter>(AnimeSaltFiltersData.YEAR, "year"),
+            type = filters.parseCheckbox<TypeFilter>(AnimeSaltFiltersData.TYPE, "term_type"),
+            status = filters.parseCheckbox<StatusFilter>(AnimeSaltFiltersData.STATUS, "status"),
+            language = filters.parseCheckbox<LanguageFilter>(AnimeSaltFiltersData.LANGUAGE, "language"),
+            rating = filters.parseCheckbox<RatingFilter>(AnimeSaltFiltersData.RATING, "rating"),
         )
     }
 
-    private object AniWaveFiltersData {
+    private object AnimeSaltFiltersData {
         val SORT = arrayOf(
             Pair("Default", "default"),
             Pair("Latest Updated", "latest-updated"),

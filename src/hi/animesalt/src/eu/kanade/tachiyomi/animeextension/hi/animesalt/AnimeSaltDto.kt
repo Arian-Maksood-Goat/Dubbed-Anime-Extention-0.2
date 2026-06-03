@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.aniwave
+package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement

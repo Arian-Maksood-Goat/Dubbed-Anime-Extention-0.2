@@ -1,10 +1,10 @@
-package eu.kanade.tachiyomi.animeextension.en.aniwave
+package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
 import android.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
-class AniWaveUtils {
+class AnimeSaltUtils {
 
     fun vrfEncrypt(input: String): String {
         var vrf = input

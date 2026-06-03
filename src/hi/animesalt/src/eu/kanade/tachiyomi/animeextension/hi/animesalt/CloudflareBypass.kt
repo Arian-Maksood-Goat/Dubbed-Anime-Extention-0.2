@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.aniwave
+package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -9,7 +9,7 @@ import android.util.Log
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import eu.kanade.tachiyomi.animeextension.en.aniwave.AniWave.Companion.UA_MOBILE
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.AnimeSalt.Companion.UA_MOBILE
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -55,7 +55,7 @@ class CloudflareBypass(private val context: Context) {
                 CookieManager.getInstance().setCookie(pageUrl, "")
                 webView.loadUrl(pageUrl)
             } catch (e: Exception) {
-                Log.e("AniWave-CF", "WebView failed: ${e.message}")
+                Log.e("AnimeSalt-CF", "WebView failed: ${e.message}")
                 if (cancelled.compareAndSet(false, true)) latch.countDown()
             }
         }
