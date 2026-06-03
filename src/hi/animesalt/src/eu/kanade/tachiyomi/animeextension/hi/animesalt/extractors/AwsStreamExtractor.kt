@@ -24,7 +24,6 @@ class AwsStreamExtractor(
         url: String,
         callback: (Video) -> Unit,
     ) {
-
         val extractedHash =
             url.substringAfterLast("/")
 

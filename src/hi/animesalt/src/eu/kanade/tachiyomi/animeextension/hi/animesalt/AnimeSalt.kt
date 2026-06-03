@@ -7,10 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import aniyomi.lib.playlistutils.PlaylistUtils
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AbyssExtractor
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AwsStreamExtractor
 import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.KwikExtractor
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.MegaPlayExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -44,7 +41,9 @@ import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
+class AnimeSalt :
+    ParsedAnimeHttpSource(),
+    ConfigurableAnimeSource {
 
     override val name = "AnimeSalt"
     override val baseUrl = "https://animesalt.ac"
@@ -55,11 +54,13 @@ class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     // Headers for Cloudflare + Player protection
     override val headers = headersOf(
-        "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Referer", baseUrl,
-        "Origin", baseUrl
+        "User-Agent",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Referer",
+        baseUrl,
+        "Origin",
+        baseUrl,
     )
-
 
     private val utils by lazy { AnimeSaltUtils() }
     private val preferences by getPreferencesLazy()

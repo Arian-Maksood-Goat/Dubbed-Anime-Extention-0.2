@@ -25,7 +25,6 @@ class AbyssExtractor(
         url: String,
         callback: (Video) -> Unit,
     ) {
-
         val reqHeaders = headers.newBuilder()
             .set(
                 "User-Agent",

@@ -22,7 +22,6 @@ class MegaPlayExtractor(
         url: String,
         callback: (Video) -> Unit,
     ) {
-
         val mainHeaders = headers.newBuilder()
             .set(
                 "User-Agent",
@@ -34,7 +33,6 @@ class MegaPlayExtractor(
             .build()
 
         try {
-
             val requestHeaders =
                 headers.newBuilder()
                     .set("Accept", "*/*")
@@ -76,7 +74,6 @@ class MegaPlayExtractor(
                     headers = mainHeaders,
                 ),
             )
-
         } catch (_: Exception) {
             return
         }

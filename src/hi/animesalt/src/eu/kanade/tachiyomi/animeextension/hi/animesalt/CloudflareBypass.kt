@@ -112,7 +112,6 @@ class CloudflareBypass(
             object : Runnable {
 
                 override fun run() {
-
                     if (completed.get()) return
 
                     val elapsed =
@@ -170,7 +169,6 @@ class CloudflareBypass(
                             .trim()
 
                     if (cookieName.isNotEmpty()) {
-
                         cookieManager.setCookie(
                             url,
                             "$cookieName=; Max-Age=0; Path=/",

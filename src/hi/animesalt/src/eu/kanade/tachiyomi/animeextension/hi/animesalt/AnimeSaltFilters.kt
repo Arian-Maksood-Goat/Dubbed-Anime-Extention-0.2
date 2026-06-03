@@ -26,14 +26,10 @@ object AnimeSaltFilters {
         state: Boolean = false,
     ) : AnimeFilter.CheckBox(name, state)
 
-    private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return filterIsInstance<R>()
-            .joinToString("") { (it as QueryPartFilter).toQueryPart() }
-    }
+    private inline fun <reified R> AnimeFilterList.asQueryPart(): String = filterIsInstance<R>()
+        .joinToString("") { (it as QueryPartFilter).toQueryPart() }
 
-    private inline fun <reified R> AnimeFilterList.getFirstOrNull(): R? {
-        return filterIsInstance<R>().firstOrNull()
-    }
+    private inline fun <reified R> AnimeFilterList.getFirstOrNull(): R? = filterIsInstance<R>().firstOrNull()
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
         options: Array<Pair<String, String>>,
@@ -57,8 +53,7 @@ object AnimeSaltFilters {
         }
     }
 
-    class SortFilter :
-        QueryPartFilter("Sort order", AnimeSaltFiltersData.SORT)
+    class SortFilter : QueryPartFilter("Sort order", AnimeSaltFiltersData.SORT)
 
     class GenreFilter :
         CheckBoxFilterList(
@@ -206,7 +201,7 @@ object AnimeSaltFilters {
 
         val YEAR = (
             Calendar.getInstance().get(Calendar.YEAR) + 1 downTo 1980
-        ).map {
+            ).map {
             it.toString() to it.toString()
         }.toTypedArray()
 
