@@ -1,13 +1,19 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'eu.kanade.tachiyomi.animeextension'
+plugins {
+    id 'com.android.application'
+    id 'eu.kanade.tachiyomi.animeextension'
+}
 
 ext {
-    name = "AnimeSalt"
-    pkgName = "animesalt"
-    lang = "hi"
+    name = 'AnimeSalt'
+    pkgName = 'animesalt'
+    lang = 'hi'
     versionCode = 1
-    versionName = "1.0"
-    baseUrl = "https://animesalt.ac"
+    versionName = '1.0'
+    baseUrl = 'https://animesalt.ac'
     isNsfw = false
+}
+
+android {
+    namespace "eu.kanade.tachiyomi.animeextension.hi.animesalt"
+    compileSdk 34
 }
