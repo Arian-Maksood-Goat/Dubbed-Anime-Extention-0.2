@@ -1,12 +1,12 @@
-apply plugin: 'eu.kanade.tachiyomi.animeextension'
-
 ext {
     extName = 'AnimeSalt'
-    pkgNameSuffix = 'animesalt'
     extClass = '.AnimeSalt'
     extVersionCode = 1
+}
 
-    baseUrl = 'https://animesalt.ac'
-    lang = 'hi'
-    isNsfw = false
+apply plugin: "kei.plugins.extension.legacy"
+
+dependencies {
+    implementation(project(":lib:playlistutils"))
+    implementation(project(":lib:unpacker"))
 }
