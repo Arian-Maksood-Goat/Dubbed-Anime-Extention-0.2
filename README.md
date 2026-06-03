@@ -80,3 +80,4 @@ This project is not affiliated with Anikku/Aniyomi. Don't ask for help about the
 official support means of Anikku/Aniyomi. All credits to the codebase goes to the original contributors.
 
 The developer of this application does not have any affiliation with the content providers available.
+
