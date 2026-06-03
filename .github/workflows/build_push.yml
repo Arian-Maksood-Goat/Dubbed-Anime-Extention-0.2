@@ -128,6 +128,7 @@ jobs:
           KAISVA: ${{ secrets.KAISVA }}
           TMDB_API: ${{ secrets.TMDB_API }}
         run: |
+          chmod +x gradlew
           ./gradlew $MODULES
 
       - name: Upload APKs (${{ matrix.chunk.number }})
