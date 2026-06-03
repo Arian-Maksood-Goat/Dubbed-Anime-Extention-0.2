@@ -1,24 +1,13 @@
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("eu.kanade.tachiyomi.animeextension")
-}
-
-android {
-    namespace = "eu.kanade.tachiyomi.animeextension.hi.animesalt"
-    compileSdk = 34
-
-    defaultConfig {
-        minSdk = 21
-    }
-}
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'eu.kanade.tachiyomi.animeextension'
 
 ext {
     name = "AnimeSalt"
     pkgName = "animesalt"
     lang = "hi"
-    versionName = "1.0"
     versionCode = 1
+    versionName = "1.0"
     baseUrl = "https://animesalt.ac"
     isNsfw = false
 }
