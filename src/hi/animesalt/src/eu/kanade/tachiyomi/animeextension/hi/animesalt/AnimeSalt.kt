@@ -50,7 +50,7 @@ class AnimeSalt :
 
     override val client = network.cloudflareClient
 
-    val headers = Headers.Builder()
+    override val headers = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
         .add("Referer", baseUrl)
         .add("Origin", baseUrl)
