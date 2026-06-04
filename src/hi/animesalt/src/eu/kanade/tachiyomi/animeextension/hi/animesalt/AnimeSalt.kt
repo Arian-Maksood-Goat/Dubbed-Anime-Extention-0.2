@@ -1,19 +1,22 @@
 package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
-import eu.kanade.tachiyomi.animesource.model.*
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AbyssExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AwsStreamExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.MegaPlayExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import androidx.preference.PreferenceScreen
 import okhttp3.FormBody
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AbyssExtractor
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AwsStreamExtractor
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.MegaPlayExtractor
 
 class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
@@ -35,17 +38,18 @@ class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val megaExtractor by lazy { MegaPlayExtractor(client, headers) }
 
     // ==================== Popular / Latest ====================
-    override fun popularAnimeRequest(page: Int): Request = 
+    override fun popularAnimeRequest(page: Int): Request =
         GET("$baseUrl/category/status/ongoing/page/$page")
 
     override fun popularAnimeSelector() = "article"
+
     override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
         title = element.selectFirst("header h2")?.text()?.trim() ?: ""
         setUrlWithoutDomain(element.selectFirst("a")?.attr("href") ?: "")
         thumbnail_url = element.selectFirst("img")?.attr("data-src") ?: element.selectFirst("img")?.attr("src")
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = 
+    override fun latestUpdatesRequest(page: Int): Request =
         GET("$baseUrl/category/type/anime/?type=series&page=$page")
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
@@ -103,11 +107,10 @@ class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         return episodes
     }
 
-    // ==================== Video List (Main Fix) ====================
+    // ==================== Video List ====================
     override fun videoListParse(document: Document): List<Video> {
         val videos = mutableListOf<Video>()
 
-        // Find iframe
         document.select("iframe").forEach { iframe ->
             var iframeUrl = iframe.attr("data-src").ifBlank { iframe.attr("src") }
             if (iframeUrl.isNotBlank()) {
@@ -131,6 +134,6 @@ class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        // Add preferences later if needed
+        // TODO: Add preferences later if needed
     }
 }
