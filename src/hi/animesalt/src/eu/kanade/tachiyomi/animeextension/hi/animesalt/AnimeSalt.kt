@@ -78,7 +78,7 @@ private val refererHeaders = customHeaders
             addPathSegment("")
             addQueryParameter("page", page.toString())
         }.build(),
-        referercustomHeaders,
+        refererHeaders,
     )
 
     override fun popularAnimeSelector(): String = "div.ani.items > div.item"
@@ -101,7 +101,7 @@ private val refererHeaders = customHeaders
             addPathSegment("")
             addQueryParameter("page", page.toString())
         }.build(),
-        referercustomHeaders,
+        refererHeaders,
     )
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
@@ -129,7 +129,7 @@ private val refererHeaders = customHeaders
             if (searchParams.sort.isNotBlank()) append("&sort=${searchParams.sort}")
             append("&page=$page&vrf=$vrf")
         }
-        return GET(url, referercustomHeaders)
+        return GET(url, refererHeaders)
     }
 
     override fun searchAnimeSelector() = popularAnimeSelector()
@@ -237,11 +237,11 @@ private val refererHeaders = customHeaders
         val animeUrl = anime.url.substringBefore("#")
         val animeId = anime.url.substringAfter("#", "")
         return if (animeId.isNotBlank()) {
-            GET(baseUrl + animeUrl, referercustomHeaders).newBuilder()
+            GET(baseUrl + animeUrl, refererHeaders).newBuilder()
                 .header("X-Anime-Id", animeId)
                 .build()
         } else {
-            GET(baseUrl + animeUrl, referercustomHeaders)
+            GET(baseUrl + animeUrl, refererHeaders)
         }
     }
 
@@ -256,13 +256,13 @@ private val refererHeaders = customHeaders
 
             if (!animeId.isNullOrBlank()) {
                 try {
-                    val listcustomHeaders = customHeaders.Builder()
+                    val listHeaders = customHeaders.newBuilder()
                         .add("Accept", "application/json, text/javascript, */*; q=0.01")
                         .add("Referer", response.request.url.toString())
                         .add("X-Requested-With", "XMLHttpRequest")
                         .build()
 
-                    client.newCall(GET("$baseUrl/api/watch-order/$animeId", listcustomHeaders)).execute().use { apiResponse ->
+                    client.newCall(GET("$baseUrl/api/watch-order/$animeId", listHeaders)).execute().use { apiResponse ->
                         val relatedDoc = apiResponse.parseAs<ResultResponse>().toDocument()
                         relatedDoc.select("div.item.flexserieslist").forEach { element ->
                             val href = element.selectFirst("a[href*=/watch/]")?.attr("href")?.substringBefore("?")?.trim() ?: return@forEach
@@ -317,13 +317,13 @@ private val refererHeaders = customHeaders
             }
         }
 
-        val listcustomHeaders = customHeaders.Builder()
+        val listHeaders = customHeaders.newBuilder()
             .add("Accept", "application/json, text/javascript, */*; q=0.01")
             .add("Referer", baseUrl + animeUrl)
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        return GET("$baseUrl/ajax/episode/list/$id?vrf=${utils.vrfEncrypt(id)}", listcustomHeaders)
+        return GET("$baseUrl/ajax/episode/list/$id?vrf=${utils.vrfEncrypt(id)}", listHeaders)
     }
 
     override fun episodeListSelector() = "div.episodes ul > li > a"
@@ -384,7 +384,7 @@ private val refererHeaders = customHeaders
         val malParams = episode.url.substringAfter("&mal=", "").takeIf { it.isNotBlank() }
         val epurlPart = episode.url.substringAfter("epurl=").substringBefore("&mal=")
 
-        val listcustomHeaders = customHeaders.newBuilder().apply {
+        val listHeaders = customHeaders.newBuilder().apply {
             add("Accept", "application/json, text/javascript, */*; q=0.01")
             add("Referer", "$baseUrl$epurlPart")
             add("X-Requested-With", "XMLHttpRequest")
@@ -404,7 +404,7 @@ private val refererHeaders = customHeaders
             }
         }.build()
 
-        return GET("$baseUrl/ajax/server/list?servers=$ids", listcustomHeaders)
+        return GET("$baseUrl/ajax/server/list?servers=$ids", listHeaders)
     }
 
     data class VideoData(
@@ -474,14 +474,14 @@ private val refererHeaders = customHeaders
 
         if (!mapperMal.isNullOrBlank() && !mapperSlug.isNullOrBlank() && !mapperTs.isNullOrBlank()) {
             try {
-                val mappercustomHeaders = customHeaders.Builder()
+                val mapperHeaders = customHeaders.newBuilder()
                     .add("Accept", "application/json, text/javascript, */*; q=0.01")
                     .add("Referer", "$baseUrl/")
                     .add("Origin", baseUrl)
                     .build()
 
                 val mapperJson = client.newCall(
-                    GET("https://mapper.mewcdn.online/api/mal/$mapperMal/$mapperSlug/$mapperTs", mappercustomHeaders),
+                    GET("https://mapper.mewcdn.online/api/mal/$mapperMal/$mapperSlug/$mapperTs", mapperHeaders),
                 ).execute().use { json.parseToJsonElement(it.body.string()).jsonObject }
 
                 for ((key, value) in mapperJson) {
@@ -532,13 +532,13 @@ private val refererHeaders = customHeaders
     }
 
     private suspend fun getEmbedLink(serverId: String, epUrl: String): String {
-        val listcustomHeaders = customHeaders.Builder()
+        val listHeaders = customHeaders.newBuilder()
             .add("Accept", "application/json, text/javascript, */*; q=0.01")
             .add("Referer", baseUrl + epUrl)
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        return client.newCall(GET("$baseUrl/ajax/server?get=$serverId", listcustomHeaders)).awaitSuccess().use { response ->
+        return client.newCall(GET("$baseUrl/ajax/server?get=$serverId", listHeaders)).awaitSuccess().use { response ->
             if (!response.isSuccessful) throw Exception("Server API returned HTTP ${response.code}")
             response.parseAs<ServerResponseDto>().result.url
         }
@@ -552,9 +552,9 @@ private val refererHeaders = customHeaders
             return emptyList()
         }
 
-        val pagecustomHeaders = customHeaders.newBuilder().add("Referer", parentUrl).build()
+        val pageHeaders = customHeaders.newBuilder().add("Referer", parentUrl).build()
 
-        val pageBody = client.newCall(GET(embedUrl, pagecustomHeaders)).awaitSuccess().use {
+        val pageBody = client.newCall(GET(embedUrl, pageHeaders)).awaitSuccess().use {
             if (!it.isSuccessful) throw Exception("Player page failed: HTTP ${it.code}")
             it.body.string()
         }
@@ -562,14 +562,14 @@ private val refererHeaders = customHeaders
         val dataId = Regex("""data-id="([^"]+)"""").find(pageBody)?.groupValues?.get(1)
             ?: throw Exception("Could not find data-id")
 
-        val apicustomHeaders = customHeaders.Builder()
+        val apiHeaders = customHeaders.newBuilder()
             .add("Accept", "*/*")
             .add("X-Requested-With", "XMLHttpRequest")
             .add("Referer", embedUrl)
             .add("Origin", "https://$host")
             .build()
 
-        val sourcesBody = client.newCall(GET("https://$host/stream/getSources?id=$dataId", apicustomHeaders)).awaitSuccess().use {
+        val sourcesBody = client.newCall(GET("https://$host/stream/getSources?id=$dataId", apiHeaders)).awaitSuccess().use {
             if (!it.isSuccessful) throw Exception("getSources failed: HTTP ${it.code}")
             it.body.string()
         }
@@ -612,7 +612,7 @@ private val refererHeaders = customHeaders
         var currentUrl = url
         repeat(3) {
             try {
-                val iframeUrl = client.newCall(GET(currentUrl, referercustomHeaders)).awaitSuccess().use {
+                val iframeUrl = client.newCall(GET(currentUrl, refererHeaders)).awaitSuccess().use {
                     it.asJsoup().selectFirst("iframe[src]")?.attr("abs:src")
                 }
                 if (iframeUrl.isNullOrBlank()) return currentUrl
