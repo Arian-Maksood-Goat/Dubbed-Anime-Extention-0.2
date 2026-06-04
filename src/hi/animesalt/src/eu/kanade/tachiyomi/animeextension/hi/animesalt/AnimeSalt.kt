@@ -23,6 +23,7 @@ import keiyoushi.utils.parseAs
 import keiyoushi.utils.useAsJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -38,9 +39,7 @@ import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class AnimeSalt :
-    ParsedAnimeHttpSource(),
-    ConfigurableAnimeSource {
+class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "AnimeSalt"
     override val baseUrl = "https://animesalt.ac"
@@ -82,12 +81,12 @@ class AnimeSalt :
     override fun popularAnimeSelector(): String = "div.ani.items > div.item"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
-        element.selectFirst("a.name")?.let { a: Element ->
+        element.selectFirst("a.name")?.let { a ->
             setUrlWithoutDomain(EP_URL_SUFFIX_REGEX.replace(a.attr("href").substringBefore("?"), ""))
             title = getTitle(a)
         }
-        thumbnail_url = element.selectFirst("div.poster img")?.let { it: Element ->
-            it.attr("data-src").ifBlank { it.attr("src") }
+        thumbnail_url = element.selectFirst("div.poster img")?.let { img ->
+            img.attr("data-src").ifBlank { img.attr("src") }
         }
     }
 
@@ -144,8 +143,9 @@ class AnimeSalt :
         return SAnime.create().apply {
             setUrlWithoutDomain(newDocument.location())
             if (!animeId.isNullOrBlank()) url += "#$animeId"
-            titleElement?.let { it: Element -> getTitle(it) }
-                ?.takeIf(String::isNotBlank)?.let { title = it }
+            titleElement?.let { getTitle(it) }
+                ?.takeIf(String::isNotBlank)
+                ?.let { title = it }
             genre = newDocument.select("div:contains(Genres) > span > a").joinToString(", ") { it.text().trim() }
             author = newDocument.select("div:contains(Studios) > span > a").joinToString(", ") { it.text().trim() }
             status = parseStatus(newDocument.select("div:contains(Status) > span").text())
@@ -220,7 +220,8 @@ class AnimeSalt :
         if (useEnglish) jpTitle?.let { altNames.add(it) } else enTitle?.let { altNames.add(it) }
         document.selectFirst("div.names.font-italic")?.text()?.takeIf { it.isNotBlank() }?.let { namesText ->
             altNames.addAll(
-                namesText.split(";").map { it.trim() }
+                namesText.split(";")
+                    .map { it.trim() }
                     .filter { it.isNotBlank() && it != jpTitle && it != enTitle },
             )
         }
@@ -234,7 +235,8 @@ class AnimeSalt :
         val animeId = anime.url.substringAfter("#", "")
         return if (animeId.isNotBlank()) {
             GET(baseUrl + animeUrl, refererHeaders).newBuilder()
-                .header("X-Anime-Id", animeId).build()
+                .header("X-Anime-Id", animeId)
+                .build()
         } else {
             GET(baseUrl + animeUrl, refererHeaders)
         }
@@ -317,6 +319,7 @@ class AnimeSalt :
             add("Referer", baseUrl + animeUrl)
             add("X-Requested-With", "XMLHttpRequest")
         }.build()
+
         return GET("$baseUrl/ajax/episode/list/$id?vrf=${utils.vrfEncrypt(id)}", listHeaders)
     }
 
@@ -325,6 +328,7 @@ class AnimeSalt :
     override fun episodeListParse(response: Response): List<SEpisode> {
         val referer = response.request.header("Referer")
         if (referer.isNullOrBlank()) return emptyList()
+
         val animeUrl = try {
             referer.toHttpUrl().encodedPath
         } catch (_: Exception) {
@@ -392,6 +396,7 @@ class AnimeSalt :
                 }
             }
         }.build()
+
         return GET("$baseUrl/ajax/server/list?servers=$ids", listHeaders)
     }
 
@@ -404,6 +409,7 @@ class AnimeSalt :
     override fun videoListParse(response: Response): List<Video> {
         val referer = response.request.header("Referer")
         if (referer.isNullOrBlank()) return emptyList()
+
         val epurl = try {
             referer.toHttpUrl().encodedPath
         } catch (_: Exception) {
@@ -503,7 +509,6 @@ class AnimeSalt :
 
     private suspend fun extractVideo(server: VideoData, epUrl: String): List<Video> = try {
         val embedLink = getEmbedLink(server.serverId, epUrl)
-
         extractFromPlayer(
             resolveEmbedChain(embedLink),
             embedLink,
@@ -578,7 +583,7 @@ class AnimeSalt :
         )
     }
 
-    private fun extractM3u8FromSources(sources: kotlinx.serialization.json.JsonElement): String? = when (sources) {
+    private fun extractM3u8FromSources(sources: JsonElement): String? = when (sources) {
         is JsonObject -> sources["file"]?.jsonPrimitive?.content
         is JsonArray -> sources.firstOrNull()?.let {
             when (it) {
@@ -618,9 +623,35 @@ class AnimeSalt :
         return EP_URL_SUFFIX_REGEX.replace(path, "").takeIf { it.startsWith("/watch/") }
     }
 
-    private fun getServerNumber(serverName: String): Int = serverName.split("-").lastOrNull()?.toIntOrNull() ?: 1
+    private fun getServerInfo(serverName: String): Triple<String, String, String?> {
+        val qualityMatch = Regex("""(\d+)p$""").find(serverName)
+        val quality = qualityMatch?.value
+        val nameWithoutQuality = if (qualityMatch != null) {
+            serverName.substringBeforeLast("-${qualityMatch.value}")
+        } else {
+            serverName
+        }
 
-    private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean = any { it.equals(s, ignoreCase) }
+        val parts = nameWithoutQuality.split("-")
+        val numPart = parts.lastOrNull()?.toIntOrNull()
+        val baseName = if (numPart != null && parts.size > 1) {
+            parts.dropLast(1).joinToString("-")
+        } else {
+            nameWithoutQuality
+        }
+
+        return Triple(
+            baseName.replaceFirstChar { it.uppercase() },
+            if (numPart != null) "S$numPart" else "S1",
+            quality,
+        )
+    }
+
+    private fun getServerNumber(serverName: String): Int =
+        serverName.split("-").lastOrNull()?.toIntOrNull() ?: 1
+
+    private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean =
+        any { it.equals(s, ignoreCase) }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
@@ -637,7 +668,8 @@ class AnimeSalt :
     }
 
     @Synchronized
-    private fun parseDate(dateStr: String): Long = runCatching { DATE_FORMATTER.parse(dateStr)?.time }.getOrNull() ?: 0L
+    private fun parseDate(dateStr: String): Long =
+        runCatching { DATE_FORMATTER.parse(dateStr)?.time }.getOrNull() ?: 0L
 
     private fun parseStatus(statusString: String): Int = when (statusString) {
         "Ongoing Anime", "Currently Airing" -> SAnime.ONGOING
@@ -665,7 +697,13 @@ class AnimeSalt :
     }
 
     companion object {
-        private val DOMAINS = arrayOf("animesalt.ac", "animewave.to", "AnimeSalt.id", "AnimeSalt.best", "AnimeSalt.ro")
+        private val DOMAINS = arrayOf(
+            "animesalt.ac",
+            "animewave.to",
+            "AnimeSalt.id",
+            "AnimeSalt.best",
+            "AnimeSalt.ro",
+        )
         private val BASE_URLS = DOMAINS.map { "https://$it" }.toTypedArray()
 
         private val SOFTSUB_REGEX = Regex("""\bsoftsub\b""", RegexOption.IGNORE_CASE)
@@ -673,7 +711,6 @@ class AnimeSalt :
         private val EP_URL_SUFFIX_REGEX = Regex("""/ep-\d+$""")
         private val DATE_FORMATTER = SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.ENGLISH)
 
-        private const val PREF_CUSTOM_DOMAIN_KEY = "custom_domain"
         private const val PREF_DOMAIN_KEY = "preferred_domain"
         private val PREF_DOMAIN_DEFAULT = BASE_URLS[0]
 
@@ -710,10 +747,13 @@ class AnimeSalt :
         const val SCORE_POS_BOTTOM = "bottom"
         const val SCORE_POS_NONE = "none"
         private const val PREF_SCORE_POSITION_DEFAULT = SCORE_POS_TOP
-        private val PREF_SCORE_POSITION_ENTRIES = arrayOf("Top of description", "Bottom of description", "Don't show")
-        private val PREF_SCORE_POSITION_VALUES = arrayOf(SCORE_POS_TOP, SCORE_POS_BOTTOM, SCORE_POS_NONE)
+        private val PREF_SCORE_POSITION_ENTRIES =
+            arrayOf("Top of description", "Bottom of description", "Don't show")
+        private val PREF_SCORE_POSITION_VALUES =
+            arrayOf(SCORE_POS_TOP, SCORE_POS_BOTTOM, SCORE_POS_NONE)
 
-        const val UA_MOBILE = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+        const val UA_MOBILE =
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
