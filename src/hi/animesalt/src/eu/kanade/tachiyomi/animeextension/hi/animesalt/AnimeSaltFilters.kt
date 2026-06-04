@@ -18,7 +18,7 @@ object AnimeSaltFilters {
 
     open class CheckBoxFilterList(
         name: String,
-        values: List<CheckBox>,
+        values: List<AnimeFilter.CheckBox>,
     ) : AnimeFilter.Group<AnimeFilter.CheckBox>(name, values)
 
     private class CheckBoxVal(
@@ -41,9 +41,7 @@ object AnimeSaltFilters {
             .mapNotNull { checkbox ->
                 if (!checkbox.state) return@mapNotNull null
 
-                options
-                    .find { it.first == checkbox.name }
-                    ?.second
+                options.find { it.first == checkbox.name }?.second
             }
 
         return if (selected.isEmpty()) {
@@ -199,9 +197,7 @@ object AnimeSaltFilters {
             "Winter" to "winter",
         )
 
-        val YEAR = (
-            Calendar.getInstance().get(Calendar.YEAR) + 1 downTo 1980
-            ).map {
+        val YEAR = ((Calendar.getInstance().get(Calendar.YEAR) + 1) downTo 1980).map {
             it.toString() to it.toString()
         }.toTypedArray()
 

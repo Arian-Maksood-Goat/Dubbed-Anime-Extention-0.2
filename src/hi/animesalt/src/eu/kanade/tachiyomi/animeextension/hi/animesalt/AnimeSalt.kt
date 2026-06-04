@@ -1,13 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
-import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import aniyomi.lib.playlistutils.PlaylistUtils
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.KwikExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -16,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.network.awaitSuccess
 import eu.kanade.tachiyomi.network.headersOf
 import eu.kanade.tachiyomi.util.asJsoup
@@ -52,7 +49,6 @@ class AnimeSalt :
 
     override val client = network.cloudflareClient
 
-    // Headers for Cloudflare + Player protection
     override val headers = headersOf(
         "User-Agent",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -66,8 +62,6 @@ class AnimeSalt :
     private val preferences by getPreferencesLazy()
     private val json: Json by injectLazy()
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
-    private val appCtx: Application by injectLazy()
-    private val kwikExtractor by lazy { KwikExtractor(client, headers, appCtx) }
 
     private val refererHeaders = headers.newBuilder()
         .add("Referer", "$baseUrl/")
@@ -75,8 +69,6 @@ class AnimeSalt :
 
     private val scorePosition get() = preferences.getString(PREF_SCORE_POSITION_KEY, PREF_SCORE_POSITION_DEFAULT)!!
     private val useEnglish get() = preferences.getString(PREF_TITLE_LANG_KEY, PREF_TITLE_LANG_DEFAULT) == "English"
-
-    // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request = GET(
         baseUrl.toHttpUrl().newBuilder().apply {
@@ -101,8 +93,6 @@ class AnimeSalt :
 
     override fun popularAnimeNextPageSelector(): String = "nav > ul.pagination > li.active ~ li"
 
-    // =============================== Latest ===============================
-
     override fun latestUpdatesRequest(page: Int): Request = GET(
         baseUrl.toHttpUrl().newBuilder().apply {
             addPathSegment("latest-updated")
@@ -115,8 +105,6 @@ class AnimeSalt :
     override fun latestUpdatesSelector() = popularAnimeSelector()
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
     override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-
-    // =============================== Search ===============================
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val searchParams = AnimeSaltFilters.getSearchParameters(filters)
@@ -146,8 +134,6 @@ class AnimeSalt :
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
     override fun getFilterList(): AnimeFilterList = AnimeSaltFilters.FILTER_LIST
-
-    // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
         val newDocument = resolveSearchAnime(document)
@@ -243,8 +229,6 @@ class AnimeSalt :
         if (scorePosition == SCORE_POS_BOTTOM && fancyScore.isNotBlank()) append(fancyScore)
     }.trim()
 
-    // ============================== Related ===============================
-
     override fun relatedAnimeListRequest(anime: SAnime): Request {
         val animeUrl = anime.url.substringBefore("#")
         val animeId = anime.url.substringAfter("#", "")
@@ -289,7 +273,8 @@ class AnimeSalt :
                             )
                         }
                     }
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }
 
             document.select("section.w-side-section").firstOrNull {
@@ -312,8 +297,6 @@ class AnimeSalt :
             emptyList()
         }
     }
-
-    // ============================== Episodes ==============================
 
     override fun episodeListRequest(anime: SAnime): Request {
         val animeId = anime.url.substringAfter("#", "")
@@ -389,8 +372,6 @@ class AnimeSalt :
         }
     }
 
-    // ============================ Video Links =============================
-
     override fun videoListRequest(episode: SEpisode): Request {
         val ids = episode.url.substringBefore("&")
         val malParams = episode.url.substringAfter("&mal=", "").takeIf { it.isNotBlank() }
@@ -418,7 +399,6 @@ class AnimeSalt :
         val type: String,
         val serverId: String,
         val serverName: String,
-        val downloadUrl: String? = null,
     )
 
     override fun videoListParse(response: Response): List<Video> {
@@ -470,7 +450,6 @@ class AnimeSalt :
             }
         }.toMutableList()
 
-        // Add mapper API servers (Kiwi-Stream, etc.)
         val mapperMal = response.request.header("X-Mapper-Mal")
         val mapperSlug = response.request.header("X-Mapper-Slug")
         val mapperTs = response.request.header("X-Mapper-Ts")
@@ -501,7 +480,7 @@ class AnimeSalt :
                             if (hosterSelection.any { serverName.contains(it, true) } &&
                                 typeSelection.contains(typeLabel, true)
                             ) {
-                                serverData.add(VideoData(typeLabel, linkId, serverName, extractMapperDownloadUrl(typeObj)))
+                                serverData.add(VideoData(typeLabel, linkId, serverName))
                             }
                         }
                     }
@@ -511,87 +490,25 @@ class AnimeSalt :
             }
         }
 
-        return serverData
-            .parallelFlatMapBlocking { server ->
-                extractVideo(server, epurl)
-            }
+        return serverData.parallelFlatMapBlocking { server ->
+            extractVideo(server, epurl)
+        }
     }
 
     private fun mapMapperName(key: String): String = when {
         key.equals("gogoanime", true) -> "Vidstream"
         key.equals("anivibe", true) -> "Vibe-Stream"
-        key.equals("animepahe", true) -> "Kiwi-Stream"
-        key.startsWith("Kiwi-Stream", true) -> key
         else -> key
     }
 
-    private fun extractMapperDownloadUrl(typeObj: JsonObject): String? {
-        val downloadObj = typeObj["download"]?.jsonObject ?: return null
-        for (quality in listOf("1080p", "720p", "480p", "360p")) {
-            downloadObj.entries.firstOrNull { it.key.contains(quality, true) }?.let {
-                return (it.value as? JsonPrimitive)?.content
-            }
-        }
-        return downloadObj.entries.firstOrNull()?.let { (it.value as? JsonPrimitive)?.content }
-    }
-
-    private suspend fun resolveDownloadUrl(url: String, maxHops: Int = 5): String {
-        val noRedirectClient = client.newBuilder()
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .build()
-
-        val dlHeaders = headers.newBuilder()
-            .add("Accept", "*/*")
-            .add("Referer", "$baseUrl/")
-            .build()
-
-        var currentUrl = url
-        repeat(maxHops) {
-            noRedirectClient.newCall(GET(currentUrl, dlHeaders)).await().use { response ->
-                if (response.code in 301..308) {
-                    currentUrl = response.header("location") ?: return currentUrl
-                } else {
-                    return currentUrl
-                }
-            }
-        }
-        return currentUrl
-    }
-
-    private fun getServerInfo(serverName: String): Triple<String, String, String?> {
-        val qualityMatch = Regex("""(\d+)p$""").find(serverName)
-        val quality = qualityMatch?.value
-        val nameWithoutQuality = if (qualityMatch != null) {
-            serverName.substringBeforeLast("-${qualityMatch.value}")
-        } else {
-            serverName
-        }
-
-        val parts = nameWithoutQuality.split("-")
-        val numPart = parts.lastOrNull()?.toIntOrNull()
-        val baseName = if (numPart != null && parts.size > 1) {
-            parts.dropLast(1).joinToString("-")
-        } else {
-            nameWithoutQuality
-        }
-
-        return Triple(baseName.replaceFirstChar { it.uppercase() }, if (numPart != null) "S$numPart" else "S1", quality)
-    }
-
-    override fun videoListSelector() = throw UnsupportedOperationException()
-    override fun videoFromElement(element: Element) = throw UnsupportedOperationException()
-    override fun videoUrlParse(document: Document) = throw UnsupportedOperationException()
-
-    // ============================= Utilities ==============================
-
     private suspend fun extractVideo(server: VideoData, epUrl: String): List<Video> = try {
         val embedLink = getEmbedLink(server.serverId, epUrl)
-        if (server.serverName.contains("kiwi", true)) {
-            extractFromKiwistream(embedLink, server, epUrl)
-        } else {
-            extractFromPlayer(resolveEmbedChain(embedLink), embedLink, server)
-        }
+
+        extractFromPlayer(
+            resolveEmbedChain(embedLink),
+            embedLink,
+            server,
+        )
     } catch (e: Exception) {
         Log.e("AnimeSalt", "Failed to extract from ${server.serverName}: ${e.message}")
         emptyList()
@@ -609,8 +526,6 @@ class AnimeSalt :
             response.parseAs<ServerResponseDto>().result.url
         }
     }
-
-    // ========================= VidWish Extractor ==========================
 
     private suspend fun extractFromPlayer(embedUrl: String, parentUrl: String, server: VideoData): List<Video> {
         val host = try {
@@ -663,45 +578,6 @@ class AnimeSalt :
         )
     }
 
-    // ========================= Kiwi-Stream Extractor ======================
-
-    private suspend fun extractFromKiwistream(embedUrl: String, server: VideoData, epUrl: String): List<Video> {
-        val (serverBaseName, serverNum, qualityFromName) = getServerInfo(server.serverName)
-        val typeSuffix = server.type.takeIf { it.isNotBlank() }?.let { " - $it" } ?: ""
-        val qualityLabel = qualityFromName ?: "default"
-        val videoLabel = "$serverBaseName $serverNum$typeSuffix - $qualityLabel"
-        val useHLS = preferences.getBoolean(PREF_LINK_TYPE_KEY, PREF_LINK_TYPE_DEFAULT)
-        val referer = "$baseUrl$epUrl"
-
-        return if (useHLS) {
-            kwikExtractor.getHlsVideo(embedUrl, referer = referer, quality = "$videoLabel (HLS)")
-                .let(::listOf)
-        } else {
-            val videoHeaders = headers.newBuilder()
-                .add("Referer", "https://kwik.cx/")
-                .add("Origin", "https://kwik.cx")
-                .build()
-
-            // Try mapper download URL first
-            server.downloadUrl?.let { dlUrl ->
-                try {
-                    val mp4Url = resolveDownloadUrl(dlUrl)
-                    if (mp4Url.isNotBlank() && mp4Url.startsWith("http")) {
-                        return listOf(Video(mp4Url, videoLabel, mp4Url, headers = videoHeaders))
-                    }
-                } catch (e: Exception) {
-                    Log.w("AnimeSalt", "Mapper MP4 failed: ${e.message}")
-                }
-            }
-
-            // Fallback: MP4 via kwik
-            kwikExtractor.getMp4Video(embedUrl, referer, videoLabel)
-                .let(::listOf)
-        }
-    }
-
-    // ========================= Shared Utilities ===========================
-
     private fun extractM3u8FromSources(sources: kotlinx.serialization.json.JsonElement): String? = when (sources) {
         is JsonObject -> sources["file"]?.jsonPrimitive?.content
         is JsonArray -> sources.firstOrNull()?.let {
@@ -712,6 +588,7 @@ class AnimeSalt :
             }
         }
         is JsonPrimitive -> sources.content
+        else -> null
     }
 
     private suspend fun resolveEmbedChain(url: String): String {
@@ -788,7 +665,7 @@ class AnimeSalt :
     }
 
     companion object {
-        private val DOMAINS = arrayOf("animesalt.ac", "animewave.to", "AnimeSalt.id", "AnimeSalt.best", "AnimeSalt.ro") // Domains from https://megaplay.buzz/domains (Base64)
+        private val DOMAINS = arrayOf("animesalt.ac", "animewave.to", "AnimeSalt.id", "AnimeSalt.best", "AnimeSalt.ro")
         private val BASE_URLS = DOMAINS.map { "https://$it" }.toTypedArray()
 
         private val SOFTSUB_REGEX = Regex("""\bsoftsub\b""", RegexOption.IGNORE_CASE)
@@ -815,8 +692,8 @@ class AnimeSalt :
         private const val PREF_SERVER_DEFAULT = "vidstream"
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
-        private val HOSTERS = arrayOf("MegaPlay", "Vidstream", "VidCloud", "Kiwi-Stream")
-        private val HOSTERS_NAMES = arrayOf("megaplay", "vidstream", "vidcloud", "kiwi-stream")
+        private val HOSTERS = arrayOf("MegaPlay", "Vidstream", "VidCloud")
+        private val HOSTERS_NAMES = arrayOf("megaplay", "vidstream", "vidcloud")
         private val PREF_HOSTER_DEFAULT = HOSTERS_NAMES.toSet()
 
         private const val PREF_SERVER_NUMS_KEY = "server_number_selection"
@@ -828,9 +705,6 @@ class AnimeSalt :
         private val TYPES = arrayOf("Sub", "H-Sub", "Dub", "A-Dub")
         private val PREF_TYPES_TOGGLE_DEFAULT = TYPES.toSet()
 
-        private const val PREF_LINK_TYPE_KEY = "preferred_link_type" // MP4 needs more work, forcing HLS until a better CF bypass gets implemented
-        private const val PREF_LINK_TYPE_DEFAULT = true
-
         private const val PREF_SCORE_POSITION_KEY = "score_position"
         const val SCORE_POS_TOP = "top"
         const val SCORE_POS_BOTTOM = "bottom"
@@ -841,8 +715,6 @@ class AnimeSalt :
 
         const val UA_MOBILE = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
     }
-
-    // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         try {
@@ -935,16 +807,6 @@ class AnimeSalt :
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }.also(screen::addPreference)
-
-//        SwitchPreferenceCompat(screen.context).apply {
-//            key = PREF_LINK_TYPE_KEY
-//            title = "Use HLS Links (Kiwi-Stream)"
-//            summary = "Enable for HLS streaming (allows seeking).\nDisable for direct MP4 downloads.\nApplies to Kiwi-Stream only."
-//            setDefaultValue(PREF_LINK_TYPE_DEFAULT)
-//            setOnPreferenceChangeListener { _, newValue ->
-//                preferences.edit().putBoolean(key, newValue as Boolean).commit()
-//            }
-//        }.also(screen::addPreference)
 
         MultiSelectListPreference(screen.context).apply {
             key = PREF_SERVER_NUMS_KEY
