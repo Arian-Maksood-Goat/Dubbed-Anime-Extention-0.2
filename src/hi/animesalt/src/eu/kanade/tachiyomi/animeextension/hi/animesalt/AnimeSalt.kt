@@ -25,18 +25,19 @@ class AnimeSalt : ParsedAnimeHttpSource() {
 
     override val client = network.cloudflareClient
 
-    override val headers = headersOf(
+    // Do NOT override headers here
+    private val customHeaders = headersOf(
         "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Referer" to baseUrl,
         "Origin" to baseUrl,
     )
 
-    private val abyssExtractor by lazy { AbyssExtractor(client, headers) }
-    private val awsExtractor by lazy { AwsStreamExtractor(client, headers) }
-    private val megaExtractor by lazy { MegaPlayExtractor(client, headers) }
+    private val abyssExtractor by lazy { AbyssExtractor(client, customHeaders) }
+    private val awsExtractor by lazy { AwsStreamExtractor(client, customHeaders) }
+    private val megaExtractor by lazy { MegaPlayExtractor(client, customHeaders) }
 
     // ==================== Popular ====================
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/status/ongoing/page/$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/status/ongoing/page/$page", customHeaders)
 
     override fun popularAnimeSelector(): String = "article"
 
@@ -50,7 +51,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String? = null
 
     // ==================== Latest ====================
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/category/type/anime/?type=series&page=$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/category/type/anime/?type=series&page=$page", customHeaders)
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
@@ -65,7 +66,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
             .add("query_type", "search")
             .add("query_args[s]", query)
             .build()
-        return POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody)
+        return POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody, headers = customHeaders)
     }
 
     override fun searchAnimeSelector(): String = "article"
@@ -93,7 +94,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
                 .add("post", postId)
                 .build()
 
-            val seasonDoc = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody))
+            val seasonDoc = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody, headers = customHeaders))
                 .execute().asJsoup()
 
             seasonDoc.select("li article").forEachIndexed { index, ep ->
@@ -102,7 +103,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
 
                 episodes.add(
                     SEpisode.create().apply {
-                        url = fixUrl(href)
+                        url = fixUrl(href, baseUrl)
                         name = epName
                         episode_number = (index + 1).toFloat()
                     },
@@ -115,14 +116,14 @@ class AnimeSalt : ParsedAnimeHttpSource() {
     override fun episodeListSelector(): String = throw UnsupportedOperationException()
     override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
-    // ==================== Video ====================
+    // ==================== Video List ====================
     override fun videoListParse(document: Document): List<Video> {
         val videos = mutableListOf<Video>()
 
         document.select("iframe").forEach { iframe ->
             var url = iframe.attr("data-src").ifBlank { iframe.attr("src") }
             if (url.isNotBlank()) {
-                url = fixUrl(url)
+                url = fixUrl(url, baseUrl)
 
                 when {
                     url.contains("short.icu") || url.contains("abyssplayer.com") -> {
