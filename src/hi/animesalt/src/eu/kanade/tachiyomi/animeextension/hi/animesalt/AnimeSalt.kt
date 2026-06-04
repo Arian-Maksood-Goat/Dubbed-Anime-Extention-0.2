@@ -26,11 +26,11 @@ class AnimeSalt : ParsedAnimeHttpSource() {
 
     override val client = network.cloudflareClient
 
-    private val customHeaders = headersOf(
-        "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Referer" to baseUrl,
-        "Origin" to baseUrl,
-    )
+    private val customHeaders = headers.newBuilder()
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .add("Referer", baseUrl)
+        .add("Origin", baseUrl)
+        .build()
 
     private val abyssExtractor by lazy { AbyssExtractor(client, customHeaders) }
     private val awsExtractor by lazy { AwsStreamExtractor(client, customHeaders) }
@@ -103,7 +103,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
 
                 episodes.add(
                     SEpisode.create().apply {
-                        url = fixUrl(href, baseUrl)
+                        url = fixUrl(href)
                         name = epName
                         episode_number = (index + 1).toFloat()
                     },
@@ -116,7 +116,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
     override fun episodeListSelector(): String = throw UnsupportedOperationException()
     override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
 
-    // Video List
+    // Video
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videos = mutableListOf<Video>()
@@ -124,7 +124,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
         document.select("iframe").forEach { iframe ->
             var url = iframe.attr("data-src").ifBlank { iframe.attr("src") }
             if (url.isNotBlank()) {
-                url = fixUrl(url, baseUrl)
+                url = fixUrl(url)
 
                 when {
                     url.contains("short.icu") || url.contains("abyssplayer.com") -> {
