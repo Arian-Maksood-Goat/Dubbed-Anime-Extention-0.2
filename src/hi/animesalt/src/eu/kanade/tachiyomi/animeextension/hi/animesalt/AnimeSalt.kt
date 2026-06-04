@@ -383,22 +383,25 @@ class AnimeSalt :
         val malParams = episode.url.substringAfter("&mal=", "").takeIf { it.isNotBlank() }
         val epurlPart = episode.url.substringAfter("epurl=").substringBefore("&mal=")
 
-        val listHeaders = headersOf(
-    "Accept", "application/json, text/javascript, */*; q=0.01",
-    "Referer", "$baseUrl$epurlPart",
-    "X-Requested-With", "XMLHttpRequest",
-)
-            malParams?.let { params ->
-                val parts = params.split("&")
-                add("X-Mapper-Mal", parts[0])
-                parts.drop(1).forEach { part ->
-                    when {
-                        part.startsWith("slug=") -> add("X-Mapper-Slug", part.substringAfter("slug="))
-                        part.startsWith("ts=") -> add("X-Mapper-Ts", part.substringAfter("ts="))
-                    }
-                }
+  val listHeaders = headers.newBuilder().apply {
+    add("Accept", "application/json, text/javascript, */*; q=0.01")
+    add("Referer", "$baseUrl$epurlPart")
+    add("X-Requested-With", "XMLHttpRequest")
+
+    malParams?.let { params ->
+        val parts = params.split("&")
+        add("X-Mapper-Mal", parts[0])
+
+        parts.drop(1).forEach { part ->
+            when {
+                part.startsWith("slug=") ->
+                    add("X-Mapper-Slug", part.substringAfter("slug="))
+                part.startsWith("ts=") ->
+                    add("X-Mapper-Ts", part.substringAfter("ts="))
             }
-        }.build()
+        }
+    }
+}.build()
 
         return GET("$baseUrl/ajax/server/list?servers=$ids", listHeaders)
     }
