@@ -27,6 +27,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
@@ -37,7 +38,6 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Locale
-import okhttp3.Headers
 
 class AnimeSalt :
     ParsedAnimeHttpSource(),
@@ -50,11 +50,11 @@ class AnimeSalt :
 
     override val client = network.cloudflareClient
 
-  override val headers = Headers.Builder()
-    .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-    .add("Referer", baseUrl)
-    .add("Origin", baseUrl)
-    .build()
+    override val headers = Headers.Builder()
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        .add("Referer", baseUrl)
+        .add("Origin", baseUrl)
+        .build()
 
     private val utils by lazy { AnimeSaltUtils() }
     private val preferences by getPreferencesLazy()
@@ -253,10 +253,10 @@ class AnimeSalt :
             if (!animeId.isNullOrBlank()) {
                 try {
                     val listHeaders = Headers.Builder()
-    .add("Accept", "application/json, text/javascript, */*; q=0.01")
-    .add("Referer", response.request.url.toString())
-    .add("X-Requested-With", "XMLHttpRequest")
-    .build()
+                        .add("Accept", "application/json, text/javascript, */*; q=0.01")
+                        .add("Referer", response.request.url.toString())
+                        .add("X-Requested-With", "XMLHttpRequest")
+                        .build()
 
                     client.newCall(GET("$baseUrl/api/watch-order/$animeId", listHeaders)).execute().use { apiResponse ->
                         val relatedDoc = apiResponse.parseAs<ResultResponse>().toDocument()
@@ -314,10 +314,10 @@ class AnimeSalt :
         }
 
         val listHeaders = Headers.Builder()
-    .add("Accept", "application/json, text/javascript, */*; q=0.01")
-    .add("Referer", baseUrl + animeUrl)
-    .add("X-Requested-With", "XMLHttpRequest")
-    .build()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Referer", baseUrl + animeUrl)
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         return GET("$baseUrl/ajax/episode/list/$id?vrf=${utils.vrfEncrypt(id)}", listHeaders)
     }
@@ -410,12 +410,10 @@ class AnimeSalt :
     )
     override fun videoListSelector() = throw UnsupportedOperationException()
 
-    override fun videoFromElement(element: Element): Video =
-    throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
 
-    override fun videoUrlParse(document: Document): String =
-    throw UnsupportedOperationException()
-    
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
+
     override fun videoListParse(response: Response): List<Video> {
         val referer = response.request.header("Referer")
         if (referer.isNullOrBlank()) return emptyList()
@@ -473,10 +471,10 @@ class AnimeSalt :
         if (!mapperMal.isNullOrBlank() && !mapperSlug.isNullOrBlank() && !mapperTs.isNullOrBlank()) {
             try {
                 val mapperHeaders = Headers.Builder()
-    .add("Accept", "application/json, text/javascript, */*; q=0.01")
-    .add("Referer", "$baseUrl/")
-    .add("Origin", baseUrl)
-    .build()
+                    .add("Accept", "application/json, text/javascript, */*; q=0.01")
+                    .add("Referer", "$baseUrl/")
+                    .add("Origin", baseUrl)
+                    .build()
 
                 val mapperJson = client.newCall(
                     GET("https://mapper.mewcdn.online/api/mal/$mapperMal/$mapperSlug/$mapperTs", mapperHeaders),
@@ -531,10 +529,10 @@ class AnimeSalt :
 
     private suspend fun getEmbedLink(serverId: String, epUrl: String): String {
         val listHeaders = Headers.Builder()
-    .add("Accept", "application/json, text/javascript, */*; q=0.01")
-    .add("Referer", baseUrl + epUrl)
-    .add("X-Requested-With", "XMLHttpRequest")
-    .build()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Referer", baseUrl + epUrl)
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         return client.newCall(GET("$baseUrl/ajax/server?get=$serverId", listHeaders)).awaitSuccess().use { response ->
             if (!response.isSuccessful) throw Exception("Server API returned HTTP ${response.code}")
@@ -561,11 +559,11 @@ class AnimeSalt :
             ?: throw Exception("Could not find data-id")
 
         val apiHeaders = Headers.Builder()
-    .add("Accept", "*/*")
-    .add("X-Requested-With", "XMLHttpRequest")
-    .add("Referer", embedUrl)
-    .add("Origin", "https://$host")
-    .build()
+            .add("Accept", "*/*")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .add("Referer", embedUrl)
+            .add("Origin", "https://$host")
+            .build()
 
         val sourcesBody = client.newCall(GET("https://$host/stream/getSources?id=$dataId", apiHeaders)).awaitSuccess().use {
             if (!it.isSuccessful) throw Exception("getSources failed: HTTP ${it.code}")
