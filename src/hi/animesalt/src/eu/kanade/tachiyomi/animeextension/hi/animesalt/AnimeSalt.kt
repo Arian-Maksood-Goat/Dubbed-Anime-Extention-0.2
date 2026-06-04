@@ -898,3 +898,4 @@ class AnimeSalt :
         }.also(screen::addPreference)
     }
 }
+// publish test
