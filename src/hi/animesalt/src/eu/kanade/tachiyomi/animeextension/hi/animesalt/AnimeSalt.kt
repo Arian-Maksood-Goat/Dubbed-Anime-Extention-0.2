@@ -50,13 +50,13 @@ class AnimeSalt :
 
     override val client = network.cloudflareClient
 
-    override val headers = Headers.Builder()
+    val headers = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
         .add("Referer", baseUrl)
         .add("Origin", baseUrl)
         .build()
 
-    private val utils by lazy { AnimeSaltUtils() }
+    private val utils = AnimeSaltUtils
     private val preferences by getPreferencesLazy()
     private val json: Json by injectLazy()
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
