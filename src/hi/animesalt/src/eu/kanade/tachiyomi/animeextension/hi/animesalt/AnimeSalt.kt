@@ -49,25 +49,25 @@ class AnimeSalt :
     override val supportsLatest = true
 
     private val customHeaders = Headers.Builder()
-    .add("User-Agent", "Mozilla/5.0")
-    .add("Referer", baseUrl)
-    .add("Origin", baseUrl)
-    .build()
+        .add("User-Agent", "Mozilla/5.0")
+        .add("Referer", baseUrl)
+        .add("Origin", baseUrl)
+        .build()
 
-private val utils = AnimeSaltUtils
+    private val utils = AnimeSaltUtils
 
-private val preferences by getPreferencesLazy()
+    private val preferences by getPreferencesLazy()
 
-private val json: Json by injectLazy()
+    private val json: Json by injectLazy()
 
-private val playlistUtils by lazy {
-    PlaylistUtils(client, customHeaders)
-}
+    private val playlistUtils by lazy {
+        PlaylistUtils(client, customHeaders)
+    }
 
-private val refererHeaders = customHeaders
-    .newBuilder()
-    .add("Referer", "$baseUrl/")
-    .build()
+    private val refererHeaders = customHeaders
+        .newBuilder()
+        .add("Referer", "$baseUrl/")
+        .build()
 
     private val scorePosition get() = preferences.getString(PREF_SCORE_POSITION_KEY, PREF_SCORE_POSITION_DEFAULT)!!
     private val useEnglish get() = preferences.getString(PREF_TITLE_LANG_KEY, PREF_TITLE_LANG_DEFAULT) == "English"
