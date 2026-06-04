@@ -26,8 +26,7 @@ object AnimeSaltFilters {
         state: Boolean = false,
     ) : AnimeFilter.CheckBox(name, state)
 
-    private inline fun <reified R> AnimeFilterList.asQueryPart(): String = filterIsInstance<R>()
-        .joinToString("") { (it as QueryPartFilter).toQueryPart() }
+    private inline fun <reified R> AnimeFilterList.asQueryPart(): String = filterIsInstance<R>().joinToString("") { (it as QueryPartFilter).toQueryPart() }
 
     private inline fun <reified R> AnimeFilterList.getFirstOrNull(): R? = filterIsInstance<R>().firstOrNull()
 
@@ -37,12 +36,10 @@ object AnimeSaltFilters {
     ): String {
         val filter = getFirstOrNull<R>() as? CheckBoxFilterList ?: return ""
 
-        val selected = filter.state
-            .mapNotNull { checkbox ->
-                if (!checkbox.state) return@mapNotNull null
-
-                options.find { it.first == checkbox.name }?.second
-            }
+        val selected = filter.state.mapNotNull { checkbox ->
+            if (!checkbox.state) return@mapNotNull null
+            options.find { it.first == checkbox.name }?.second
+        }
 
         return if (selected.isEmpty()) {
             ""
@@ -56,43 +53,43 @@ object AnimeSaltFilters {
     class GenreFilter :
         CheckBoxFilterList(
             "Genre",
-            AnimeSaltFiltersData.GENRE.map(::CheckBoxVal),
+            AnimeSaltFiltersData.GENRE.map { (name, _) -> CheckBoxVal(name) },
         )
 
     class SeasonFilter :
         CheckBoxFilterList(
             "Season",
-            AnimeSaltFiltersData.SEASON.map(::CheckBoxVal),
+            AnimeSaltFiltersData.SEASON.map { (name, _) -> CheckBoxVal(name) },
         )
 
     class YearFilter :
         CheckBoxFilterList(
             "Year",
-            AnimeSaltFiltersData.YEAR.map(::CheckBoxVal),
+            AnimeSaltFiltersData.YEAR.map { (name, _) -> CheckBoxVal(name) },
         )
 
     class TypeFilter :
         CheckBoxFilterList(
             "Type",
-            AnimeSaltFiltersData.TYPE.map(::CheckBoxVal),
+            AnimeSaltFiltersData.TYPE.map { (name, _) -> CheckBoxVal(name) },
         )
 
     class StatusFilter :
         CheckBoxFilterList(
             "Status",
-            AnimeSaltFiltersData.STATUS.map(::CheckBoxVal),
+            AnimeSaltFiltersData.STATUS.map { (name, _) -> CheckBoxVal(name) },
         )
 
     class LanguageFilter :
         CheckBoxFilterList(
             "Language",
-            AnimeSaltFiltersData.LANGUAGE.map(::CheckBoxVal),
+            AnimeSaltFiltersData.LANGUAGE.map { (name, _) -> CheckBoxVal(name) },
         )
 
     class RatingFilter :
         CheckBoxFilterList(
             "Rating",
-            AnimeSaltFiltersData.RATING.map(::CheckBoxVal),
+            AnimeSaltFiltersData.RATING.map { (name, _) -> CheckBoxVal(name) },
         )
 
     val FILTER_LIST
@@ -197,9 +194,9 @@ object AnimeSaltFilters {
             "Winter" to "winter",
         )
 
-        val YEAR = ((Calendar.getInstance().get(Calendar.YEAR) + 1) downTo 1980).map {
-            it.toString() to it.toString()
-        }.toTypedArray()
+        val YEAR = ((Calendar.getInstance().get(Calendar.YEAR) + 1) downTo 1980)
+            .map { it.toString() to it.toString() }
+            .toTypedArray()
 
         val TYPE = arrayOf(
             "Movie" to "Movie",
