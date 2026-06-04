@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
-import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AbyssExtractor
 import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AwsStreamExtractor
 import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.MegaPlayExtractor
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -18,9 +16,7 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class AnimeSalt :
-    ParsedAnimeHttpSource(),
-    ConfigurableAnimeSource {
+class AnimeSalt : ParsedAnimeHttpSource() {
 
     override val name = "AnimeSalt"
     override val baseUrl = "https://animesalt.ac"
@@ -30,19 +26,16 @@ class AnimeSalt :
     override val client = network.cloudflareClient
 
     override val headers = headersOf(
-        "User-Agent",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Referer",
-        baseUrl,
-        "Origin",
-        baseUrl,
+        "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Referer" to baseUrl,
+        "Origin" to baseUrl,
     )
 
     private val abyssExtractor by lazy { AbyssExtractor(client, headers) }
     private val awsExtractor by lazy { AwsStreamExtractor(client, headers) }
     private val megaExtractor by lazy { MegaPlayExtractor(client, headers) }
 
-    // Popular
+    // ==================== Popular ====================
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/status/ongoing/page/$page")
 
     override fun popularAnimeSelector(): String = "article"
@@ -54,13 +47,16 @@ class AnimeSalt :
             ?: element.selectFirst("img")?.attr("src")
     }
 
-    // Latest
+    override fun popularAnimeNextPageSelector(): String? = null
+
+    // ==================== Latest ====================
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/category/type/anime/?type=series&page=$page")
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+    override fun latestUpdatesNextPageSelector(): String? = null
 
-    // Search
+    // ==================== Search ====================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val formBody = FormBody.Builder()
             .add("action", "torofilm_infinite_scroll")
@@ -74,15 +70,16 @@ class AnimeSalt :
 
     override fun searchAnimeSelector(): String = "article"
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector(): String? = null
 
-    // Details
+    // ==================== Details ====================
     override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
         title = document.selectFirst("h1")?.text() ?: ""
         thumbnail_url = document.selectFirst("div.bd img")?.attr("data-src")
         description = document.selectFirst("#overview-text p")?.text()
     }
 
-    // Episodes
+    // ==================== Episodes ====================
     override fun episodeListParse(document: Document): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
 
@@ -105,9 +102,9 @@ class AnimeSalt :
 
                 episodes.add(
                     SEpisode.create().apply {
-                        this.url = fixUrl(href)
-                        this.name = epName
-                        this.episode_number = (index + 1).toFloat()
+                        url = fixUrl(href)
+                        name = epName
+                        episode_number = (index + 1).toFloat()
                     },
                 )
             }
@@ -115,7 +112,10 @@ class AnimeSalt :
         return episodes
     }
 
-    // Video List - Main Working Part
+    override fun episodeListSelector(): String = throw UnsupportedOperationException()
+    override fun episodeFromElement(element: Element): SEpisode = throw UnsupportedOperationException()
+
+    // ==================== Video ====================
     override fun videoListParse(document: Document): List<Video> {
         val videos = mutableListOf<Video>()
 
@@ -141,7 +141,7 @@ class AnimeSalt :
         return videos
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        // You can add preferences later
-    }
+    override fun videoListSelector(): String = throw UnsupportedOperationException()
+    override fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
+    override fun videoUrlParse(document: Document): String = throw UnsupportedOperationException()
 }
