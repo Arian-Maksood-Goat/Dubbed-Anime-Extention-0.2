@@ -39,7 +39,9 @@ import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
+class AnimeSalt :
+    ParsedAnimeHttpSource(),
+    ConfigurableAnimeSource {
 
     override val name = "AnimeSalt"
     override val baseUrl = "https://animesalt.ac"
@@ -647,11 +649,9 @@ class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         )
     }
 
-    private fun getServerNumber(serverName: String): Int =
-        serverName.split("-").lastOrNull()?.toIntOrNull() ?: 1
+    private fun getServerNumber(serverName: String): Int = serverName.split("-").lastOrNull()?.toIntOrNull() ?: 1
 
-    private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean =
-        any { it.equals(s, ignoreCase) }
+    private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean = any { it.equals(s, ignoreCase) }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
@@ -668,8 +668,7 @@ class AnimeSalt : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     @Synchronized
-    private fun parseDate(dateStr: String): Long =
-        runCatching { DATE_FORMATTER.parse(dateStr)?.time }.getOrNull() ?: 0L
+    private fun parseDate(dateStr: String): Long = runCatching { DATE_FORMATTER.parse(dateStr)?.time }.getOrNull() ?: 0L
 
     private fun parseStatus(statusString: String): Int = when (statusString) {
         "Ongoing Anime", "Currently Airing" -> SAnime.ONGOING
