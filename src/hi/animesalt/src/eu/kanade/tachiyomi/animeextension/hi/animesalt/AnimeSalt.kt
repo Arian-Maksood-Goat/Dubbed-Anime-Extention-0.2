@@ -27,7 +27,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
@@ -48,20 +48,26 @@ class AnimeSalt :
     override val lang = "hi"
     override val supportsLatest = true
 
-    private val customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.Builder()
-      .add("User-Agent", "Mozilla/5.0")
-      .add("Referer", baseUrl)
-      .add("Origin", baseUrl)
-      .build()
+    private val customHeaders = Headers.Builder()
+    .add("User-Agent", "Mozilla/5.0")
+    .add("Referer", baseUrl)
+    .add("Origin", baseUrl)
+    .build()
 
-    private val utils = AnimeSaltUtils
-    private val preferences by getPreferencesLazy()
-    private val json: Json by injectLazy()
-    private val playlistUtils by lazy { PlaylistUtils(client, customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders) }
+private val utils = AnimeSaltUtils
 
-    private val referercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.newBuilder()
-        .add("Referer", "$baseUrl/")
-        .build()
+private val preferences by getPreferencesLazy()
+
+private val json: Json by injectLazy()
+
+private val playlistUtils by lazy {
+    PlaylistUtils(client, customHeaders)
+}
+
+private val refererHeaders = customHeaders
+    .newBuilder()
+    .add("Referer", "$baseUrl/")
+    .build()
 
     private val scorePosition get() = preferences.getString(PREF_SCORE_POSITION_KEY, PREF_SCORE_POSITION_DEFAULT)!!
     private val useEnglish get() = preferences.getString(PREF_TITLE_LANG_KEY, PREF_TITLE_LANG_DEFAULT) == "English"
@@ -72,7 +78,7 @@ class AnimeSalt :
             addPathSegment("")
             addQueryParameter("page", page.toString())
         }.build(),
-        referercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders,
+        referercustomHeaders,
     )
 
     override fun popularAnimeSelector(): String = "div.ani.items > div.item"
@@ -95,7 +101,7 @@ class AnimeSalt :
             addPathSegment("")
             addQueryParameter("page", page.toString())
         }.build(),
-        referercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders,
+        referercustomHeaders,
     )
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
@@ -123,7 +129,7 @@ class AnimeSalt :
             if (searchParams.sort.isNotBlank()) append("&sort=${searchParams.sort}")
             append("&page=$page&vrf=$vrf")
         }
-        return GET(url, referercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)
+        return GET(url, referercustomHeaders)
     }
 
     override fun searchAnimeSelector() = popularAnimeSelector()
@@ -231,11 +237,11 @@ class AnimeSalt :
         val animeUrl = anime.url.substringBefore("#")
         val animeId = anime.url.substringAfter("#", "")
         return if (animeId.isNotBlank()) {
-            GET(baseUrl + animeUrl, referercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders).newBuilder()
+            GET(baseUrl + animeUrl, referercustomHeaders).newBuilder()
                 .header("X-Anime-Id", animeId)
                 .build()
         } else {
-            GET(baseUrl + animeUrl, referercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)
+            GET(baseUrl + animeUrl, referercustomHeaders)
         }
     }
 
@@ -250,13 +256,13 @@ class AnimeSalt :
 
             if (!animeId.isNullOrBlank()) {
                 try {
-                    val listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.Builder()
+                    val listcustomHeaders = customHeaders.Builder()
                         .add("Accept", "application/json, text/javascript, */*; q=0.01")
                         .add("Referer", response.request.url.toString())
                         .add("X-Requested-With", "XMLHttpRequest")
                         .build()
 
-                    client.newCall(GET("$baseUrl/api/watch-order/$animeId", listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)).execute().use { apiResponse ->
+                    client.newCall(GET("$baseUrl/api/watch-order/$animeId", listcustomHeaders)).execute().use { apiResponse ->
                         val relatedDoc = apiResponse.parseAs<ResultResponse>().toDocument()
                         relatedDoc.select("div.item.flexserieslist").forEach { element ->
                             val href = element.selectFirst("a[href*=/watch/]")?.attr("href")?.substringBefore("?")?.trim() ?: return@forEach
@@ -311,13 +317,13 @@ class AnimeSalt :
             }
         }
 
-        val listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.Builder()
+        val listcustomHeaders = customHeaders.Builder()
             .add("Accept", "application/json, text/javascript, */*; q=0.01")
             .add("Referer", baseUrl + animeUrl)
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        return GET("$baseUrl/ajax/episode/list/$id?vrf=${utils.vrfEncrypt(id)}", listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)
+        return GET("$baseUrl/ajax/episode/list/$id?vrf=${utils.vrfEncrypt(id)}", listcustomHeaders)
     }
 
     override fun episodeListSelector() = "div.episodes ul > li > a"
@@ -378,7 +384,7 @@ class AnimeSalt :
         val malParams = episode.url.substringAfter("&mal=", "").takeIf { it.isNotBlank() }
         val epurlPart = episode.url.substringAfter("epurl=").substringBefore("&mal=")
 
-        val listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.newBuilder().apply {
+        val listcustomHeaders = customHeaders.newBuilder().apply {
             add("Accept", "application/json, text/javascript, */*; q=0.01")
             add("Referer", "$baseUrl$epurlPart")
             add("X-Requested-With", "XMLHttpRequest")
@@ -398,7 +404,7 @@ class AnimeSalt :
             }
         }.build()
 
-        return GET("$baseUrl/ajax/server/list?servers=$ids", listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)
+        return GET("$baseUrl/ajax/server/list?servers=$ids", listcustomHeaders)
     }
 
     data class VideoData(
@@ -468,14 +474,14 @@ class AnimeSalt :
 
         if (!mapperMal.isNullOrBlank() && !mapperSlug.isNullOrBlank() && !mapperTs.isNullOrBlank()) {
             try {
-                val mappercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.Builder()
+                val mappercustomHeaders = customHeaders.Builder()
                     .add("Accept", "application/json, text/javascript, */*; q=0.01")
                     .add("Referer", "$baseUrl/")
                     .add("Origin", baseUrl)
                     .build()
 
                 val mapperJson = client.newCall(
-                    GET("https://mapper.mewcdn.online/api/mal/$mapperMal/$mapperSlug/$mapperTs", mappercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders),
+                    GET("https://mapper.mewcdn.online/api/mal/$mapperMal/$mapperSlug/$mapperTs", mappercustomHeaders),
                 ).execute().use { json.parseToJsonElement(it.body.string()).jsonObject }
 
                 for ((key, value) in mapperJson) {
@@ -526,13 +532,13 @@ class AnimeSalt :
     }
 
     private suspend fun getEmbedLink(serverId: String, epUrl: String): String {
-        val listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.Builder()
+        val listcustomHeaders = customHeaders.Builder()
             .add("Accept", "application/json, text/javascript, */*; q=0.01")
             .add("Referer", baseUrl + epUrl)
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        return client.newCall(GET("$baseUrl/ajax/server?get=$serverId", listcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)).awaitSuccess().use { response ->
+        return client.newCall(GET("$baseUrl/ajax/server?get=$serverId", listcustomHeaders)).awaitSuccess().use { response ->
             if (!response.isSuccessful) throw Exception("Server API returned HTTP ${response.code}")
             response.parseAs<ServerResponseDto>().result.url
         }
@@ -546,9 +552,9 @@ class AnimeSalt :
             return emptyList()
         }
 
-        val pagecustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.newBuilder().add("Referer", parentUrl).build()
+        val pagecustomHeaders = customHeaders.newBuilder().add("Referer", parentUrl).build()
 
-        val pageBody = client.newCall(GET(embedUrl, pagecustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)).awaitSuccess().use {
+        val pageBody = client.newCall(GET(embedUrl, pagecustomHeaders)).awaitSuccess().use {
             if (!it.isSuccessful) throw Exception("Player page failed: HTTP ${it.code}")
             it.body.string()
         }
@@ -556,14 +562,14 @@ class AnimeSalt :
         val dataId = Regex("""data-id="([^"]+)"""").find(pageBody)?.groupValues?.get(1)
             ?: throw Exception("Could not find data-id")
 
-        val apicustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders = customcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders.Builder()
+        val apicustomHeaders = customHeaders.Builder()
             .add("Accept", "*/*")
             .add("X-Requested-With", "XMLHttpRequest")
             .add("Referer", embedUrl)
             .add("Origin", "https://$host")
             .build()
 
-        val sourcesBody = client.newCall(GET("https://$host/stream/getSources?id=$dataId", apicustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)).awaitSuccess().use {
+        val sourcesBody = client.newCall(GET("https://$host/stream/getSources?id=$dataId", apicustomHeaders)).awaitSuccess().use {
             if (!it.isSuccessful) throw Exception("getSources failed: HTTP ${it.code}")
             it.body.string()
         }
@@ -606,7 +612,7 @@ class AnimeSalt :
         var currentUrl = url
         repeat(3) {
             try {
-                val iframeUrl = client.newCall(GET(currentUrl, referercustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomcustomHeaders)).awaitSuccess().use {
+                val iframeUrl = client.newCall(GET(currentUrl, referercustomHeaders)).awaitSuccess().use {
                     it.asJsoup().selectFirst("iframe[src]")?.attr("abs:src")
                 }
                 if (iframeUrl.isNullOrBlank()) return currentUrl
