@@ -1,13 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.hi.animesalt
 
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AbyssExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AwsStreamExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.MegaPlayExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AbyssExtractor
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.AwsStreamExtractor
-import eu.kanade.tachiyomi.animeextension.hi.animesalt.extractors.MegaPlayExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -29,7 +29,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
     private val customHeaders = headersOf(
         "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Referer" to baseUrl,
-        "Origin" to baseUrl
+        "Origin" to baseUrl,
     )
 
     private val abyssExtractor by lazy { AbyssExtractor(client, customHeaders) }
@@ -37,8 +37,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
     private val megaExtractor by lazy { MegaPlayExtractor(client, customHeaders) }
 
     // Popular
-    override fun popularAnimeRequest(page: Int): Request =
-        GET("$baseUrl/category/status/ongoing/page/$page", customHeaders)
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/status/ongoing/page/$page", customHeaders)
 
     override fun popularAnimeSelector(): String = "article"
 
@@ -51,8 +50,7 @@ class AnimeSalt : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String? = null
 
     // Latest
-    override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/category/type/anime/?type=series&page=$page", customHeaders)
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/category/type/anime/?type=series&page=$page", customHeaders)
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
@@ -103,11 +101,13 @@ class AnimeSalt : ParsedAnimeHttpSource() {
                 val href = ep.selectFirst("a")?.attr("href") ?: return@forEachIndexed
                 val epName = ep.selectFirst("h2.entry-title")?.text() ?: "Episode ${index + 1}"
 
-                episodes.add(SEpisode.create().apply {
-                    url = fixUrl(href, baseUrl)
-                    name = epName
-                    episode_number = (index + 1).toFloat()
-                })
+                episodes.add(
+                    SEpisode.create().apply {
+                        url = fixUrl(href, baseUrl)
+                        name = epName
+                        episode_number = (index + 1).toFloat()
+                    },
+                )
             }
         }
         return episodes
